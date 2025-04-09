@@ -1,31 +1,28 @@
-# stock.py
-
 import streamlit as st
 import numpy as np
 import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
+from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
-import joblib
 import os
-
 # --- Streamlit UI Setup ---
 st.set_page_config(page_title="TSLA Stock Predictor", page_icon="📈", layout="centered")
 st.title("📈 TSLA Stock Price Predictor")
-st.markdown("Enter a future date to predict Tesla's stock price using a pre-trained model.")
+st.markdown("Enter a future date to predict Tesla's stock price using a pre-trained LSTM model.")
 
 # --- Load Model ---
-MODEL_PATH = "tsla_model.joblib"
+MODEL_PATH = "C:/datasets/joblib models/tsla_lstm_model.h5"
 
 @st.cache_resource
-def load_trained_model():
+def load_lstm_model():
     if os.path.exists(MODEL_PATH):
-        return joblib.load(MODEL_PATH)
+        return load_model(MODEL_PATH)
     else:
-        st.error("❌ Model file not found. Please train and save the model as 'tsla_model.joblib'.")
+        st.error("❌ Model file not found. Please train and save the LSTM model first.")
         return None
 
-model = load_trained_model()
+model = load_lstm_model()
 
 # --- Load Data ---
 @st.cache_data
@@ -47,20 +44,23 @@ def predict_tsla_price(model, target_date_str):
         if target_date <= last_date:
             return f"⚠️ Please enter a **future date** after {last_date}", None
 
+        # Business days from last known date to target date
         future_dates = pd.date_range(start=last_date + timedelta(days=1), end=target_date, freq='B')
         days_to_predict = len(future_dates)
 
         if days_to_predict == 0:
             return "⚠️ No trading days between now and the date entered.", None
 
-        input_sequence = scaled_data[-60:].reshape(1, -1)
+        input_sequence = scaled_data[-60:].tolist()
         predictions_scaled = []
 
         for _ in range(days_to_predict):
-            pred_scaled = model.predict(input_sequence)[0]
+            X_input = np.array(input_sequence[-60:]).reshape(1, 60, 1)
+            pred_scaled = model.predict(X_input, verbose=0)[0][0]
             predictions_scaled.append(pred_scaled)
-            input_sequence = np.append(input_sequence[:, 1:], [[pred_scaled]], axis=1)
+            input_sequence.append([pred_scaled])
 
+        # Final prediction value
         final_price = scaler.inverse_transform(np.array([[predictions_scaled[-1]]]))[0][0]
         return None, round(final_price, 2)
 
@@ -84,4 +84,4 @@ if st.button("🔮 Predict Price"):
             st.success(f"💰 Predicted TSLA price on **{date_input}** is **${prediction}**")
 
 st.markdown("---")
-st.caption("🔧 Built by Ajay • Powered by scikit-learn, Streamlit, and yFinance")
+st.caption("🔧 Built by Ajay • Powered by LSTM, Streamlit, and yFinance")
