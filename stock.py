@@ -5,22 +5,25 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
+import urllib.request
 import os
+
 # --- Streamlit UI Setup ---
 st.set_page_config(page_title="TSLA Stock Predictor", page_icon="📈", layout="centered")
 st.title("📈 TSLA Stock Price Predictor")
 st.markdown("Enter a future date to predict Tesla's stock price using a pre-trained LSTM model.")
 
-# --- Load Model ---
+# --- GitHub Model URL ---
+GITHUB_MODEL_URL = "https://github.com/ajaybabu123/models/raw/main/tsla_lstm_model.h5"
 MODEL_PATH = "tsla_lstm_model.h5"
 
+# --- Load Model from GitHub if not present ---
 @st.cache_resource
 def load_lstm_model():
-    if os.path.exists(MODEL_PATH):
-        return load_model(MODEL_PATH)
-    else:
-        st.error("❌ Model file not found. Please train and save the LSTM model first.")
-        return None
+    if not os.path.exists(MODEL_PATH):
+        st.info("📥 Downloading model from GitHub...")
+        urllib.request.urlretrieve(GITHUB_MODEL_URL, MODEL_PATH)
+    return load_model(MODEL_PATH)
 
 model = load_lstm_model()
 
@@ -44,7 +47,6 @@ def predict_tsla_price(model, target_date_str):
         if target_date <= last_date:
             return f"⚠️ Please enter a **future date** after {last_date}", None
 
-        # Business days from last known date to target date
         future_dates = pd.date_range(start=last_date + timedelta(days=1), end=target_date, freq='B')
         days_to_predict = len(future_dates)
 
@@ -60,7 +62,6 @@ def predict_tsla_price(model, target_date_str):
             predictions_scaled.append(pred_scaled)
             input_sequence.append([pred_scaled])
 
-        # Final prediction value
         final_price = scaler.inverse_transform(np.array([[predictions_scaled[-1]]]))[0][0]
         return None, round(final_price, 2)
 
@@ -84,4 +85,4 @@ if st.button("🔮 Predict Price"):
             st.success(f"💰 Predicted TSLA price on **{date_input}** is **${prediction}**")
 
 st.markdown("---")
-st.caption("🔧 Built by Ajay • Powered by LSTM, Streamlit, and yFinance")
+st.caption("🔧 Built by Ajay • Model loaded from GitHub • Powered by LSTM, Streamlit, and yFinance")
