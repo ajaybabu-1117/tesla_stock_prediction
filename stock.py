@@ -12,7 +12,7 @@ st.title("📈 TSLA Stock Price Predictor")
 st.markdown("Enter a future date to predict Tesla's stock price using a pre-trained LSTM model.")
 
 # --- Load Model ---
-MODEL_PATH = "C:/datasets/joblib models/tsla_lstm_model.h5"
+MODEL_PATH = "tsla_lstm_model.h5"
 
 @st.cache_resource
 def load_lstm_model():
