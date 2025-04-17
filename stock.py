@@ -21,7 +21,7 @@ MODEL_PATH = "tsla_lstm_model.h5"
 @st.cache_resource
 def load_lstm_model():
     if not os.path.exists(MODEL_PATH):
-        st.info("📥 Downloading model from GitHub...")
+        st.info(" Downloading model from GitHub...")
         urllib.request.urlretrieve(GITHUB_MODEL_URL, MODEL_PATH)
     return load_model(MODEL_PATH)
 
@@ -71,10 +71,10 @@ def predict_tsla_price(model, target_date_str):
         return f"❌ Error: {str(e)}", None
 
 # --- UI Input ---
-st.subheader("📅 Enter Date for Prediction")
+st.subheader("Enter Date for Prediction")
 date_input = st.text_input("Enter a future date (YYYY-MM-DD)", placeholder="2025-06-01")
 
-if st.button("🔮 Predict Price"):
+if st.button(" Predict Price"):
     if not date_input:
         st.warning("Please enter a date.")
     elif model:
@@ -82,7 +82,7 @@ if st.button("🔮 Predict Price"):
         if msg:
             st.warning(msg)
         else:
-            st.success(f"💰 Predicted TSLA price on **{date_input}** is **${prediction}**")
+            st.success(f" Predicted TSLA price on **{date_input}** is **${prediction}**")
 
 st.markdown("---")
 st.caption("🔧 Built by Ajay • Model loaded from GitHub • Powered by LSTM, Streamlit, and yFinance")
